@@ -117,13 +117,42 @@ npx prisma db push
 npx prisma db seed
 ```
 
-### 5. Run the development server
+### 5. Quick Setup (Automated)
+
+For a quick setup, run our automated setup script:
+
+```bash
+npm run setup
+```
+
+This will:
+- Create .env file if it doesn't exist
+- Generate Prisma client
+- Set up the database schema
+- Seed with demo data
+
+### 6. Run the development server
 
 ```bash
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+### Manual Setup (Alternative)
+
+If you prefer manual setup:
+
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Create and sync database
+npm run db:push
+
+# Seed with demo data (optional)
+npm run db:seed
+```
 
 ## 📱 Usage
 
@@ -194,6 +223,30 @@ npx prisma generate
 npm run build
 npm start
 ```
+
+## 🔧 Troubleshooting
+
+### Prisma Client Issues
+
+If you encounter Prisma client initialization errors:
+
+```bash
+# Regenerate Prisma client
+npm run db:generate
+
+# Reset and recreate database
+npm run db:push
+
+# Re-seed database
+npm run db:seed
+```
+
+### Common Issues
+
+1. **Port already in use**: The app will automatically use the next available port (usually 3001)
+2. **Database connection errors**: Ensure your `.env` file has the correct DATABASE_URL
+3. **Build failures**: Run `npm run db:generate` before building
+4. **Missing demo data**: Run `npm run db:seed` to create demo accounts
 
 ## 🚀 Deployment
 
