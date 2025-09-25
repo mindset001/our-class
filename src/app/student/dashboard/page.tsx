@@ -185,7 +185,7 @@ export default function StudentDashboard() {
         <Card className="mb-6 sm:mb-8">
           <CardHeader>
             <CardTitle>My Courses</CardTitle>
-            <CardDescription>Courses you're currently enrolled in</CardDescription>
+            <CardDescription>Courses you&apos;re currently enrolled in</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center py-6 sm:py-8 text-gray-500">
