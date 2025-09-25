@@ -1,0 +1,230 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  firstName String
+  lastName  String
+  password  String
+  role      String   @default("STUDENT")
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  teacherCourses Course[]                @relation("TeacherCourses")
+  enrollments    Enrollment[]
+  assignments    Assignment[]            @relation("TeacherAssignments")
+  submissions    AssignmentSubmission[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  code        String   @unique
+  teacherId   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  teacher     User         @relation("TeacherCourses", fields: [teacherId], references: [id])
+  modules     Module[]
+  enrollments Enrollment[]
+  assignments Assignment[]
+
+  @@map("courses")
+}
+
+model Module {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  order       Int
+  courseId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  course    Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+  materials Material[]
+
+  @@map("modules")
+}
+
+model Lesson {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  content     String?
+  order       Int
+  moduleId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  module    Module     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  materials Material[]
+
+  @@map("lessons")
+}
+
+model Material {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  type        String
+  fileName    String?
+  filePath    String?
+  fileSize    Int?
+  mimeType    String?
+  videoUrl    String?
+  moduleId    String?
+  lessonId    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Relations
+  module Module? @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@map("materials")
+}
+
+model Enrollment {
+  id         String           @id @default(cuid())
+  studentId  String
+  courseId   String
+  status     String           @default("ACTIVE")
+  enrolledAt DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  // Relations
+  student User   @relation(fields: [studentId], references: [id])
+  course  Course @relation(fields: [courseId], references: [id])
+
+  @@unique([studentId, courseId])
+  @@map("enrollments")
+}
+
+model Assignment {
+  id          String             @id @default(cuid())
+  title       String
+  description String
+  dueDate     DateTime
+  maxPoints   Float              @default(100)
+  courseId    String
+  teacherId   String
+  isPublished Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  // Relations
+  course      Course                 @relation(fields: [courseId], references: [id])
+  teacher     User                   @relation("TeacherAssignments", fields: [teacherId], references: [id])
+  submissions AssignmentSubmission[]
+  attachments AssignmentAttachment[]
+
+  @@map("assignments")
+}
+
+model AssignmentAttachment {
+  id           String @id @default(cuid())
+  fileName     String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  assignmentId String
+
+  // Relations
+  assignment Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  @@map("assignment_attachments")
+}
+
+model AssignmentSubmission {
+  id           String                   @id @default(cuid())
+  studentId    String
+  assignmentId String
+  content      String?
+  submittedAt  DateTime                 @default(now())
+  grade        Float?
+  feedback     String?
+  gradedAt     DateTime?
+  status       String                     @default("SUBMITTED")
+
+  // Relations
+  student    User                         @relation(fields: [studentId], references: [id])
+  assignment Assignment                   @relation(fields: [assignmentId], references: [id])
+  files      SubmissionFile[]
+
+  @@unique([studentId, assignmentId])
+  @@map("assignment_submissions")
+}
+
+model SubmissionFile {
+  id           String @id @default(cuid())
+  fileName     String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  submissionId String
+
+  // Relations
+  submission AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("submission_files")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// Enums replaced with String types for SQLite compatibility
+// Valid values for role: "ADMIN", "TEACHER", "STUDENT"
+// Valid values for MaterialType: "FILE", "VIDEO_UPLOAD", "VIDEO_LINK"
+// Valid values for EnrollmentStatus: "ACTIVE", "INACTIVE", "COMPLETED", "DROPPED"
+// Valid values for AssignmentSubmissionStatus: "SUBMITTED", "GRADED", "RETURNED"
+// Valid values for NotificationType: "ASSIGNMENT_DUE", "ASSIGNMENT_GRADED", "COURSE_ANNOUNCEMENT", "SYSTEM_NOTIFICATION"
